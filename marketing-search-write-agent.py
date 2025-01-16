@@ -132,7 +132,8 @@ def initialize_agents(api_key, max_results):
     search = TavilySearchResults(
         tavily_api_key=api_key2,   # <--- add this line
         max_results=max_results,
-        search_depth="advanced"
+        search_depth="advanced",
+        include_raw_content=True
     )
     tools = [search]
 
