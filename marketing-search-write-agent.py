@@ -57,7 +57,7 @@ api_key2 = st.sidebar.text_input(
 )
 
 # Check if the API key is available
-if not api_key and not os.environ.get("tavily_api_key"):
+if not api_key and not os.environ.get("TAVILY_API_KEY"):
     st.sidebar.warning("Please enter your Tavily API key to proceed.")
     st.stop()
 
