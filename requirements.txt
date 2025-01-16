@@ -7,3 +7,4 @@ transformers
 torch
 langchain_openai
 streamlit
+tavily-python 
