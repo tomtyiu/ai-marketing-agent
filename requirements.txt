@@ -7,4 +7,3 @@ transformers
 torch
 langchain_openai
 streamlit
-tavily_search
