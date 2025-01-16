@@ -171,15 +171,14 @@ if st.session_state.agent_search is None or st.session_state.agent_writer is Non
 # ------------------------------
 def search_write_agent(objective_text, agent_search, agent_writer):
     """
-    Creates and invokes two agents:
-    1. Search Agent: Gathers relevant literature based on the user's query.
-    2. Writing Agent: Generates a professional document based on the search results.
-
-    Returns the responses from both agents.
+    1. Calls the search agent to gather relevant documents.
+    2. Displays them in Streamlit (optional).
+    3. Calls the writing agent to produce a refined summary.
+    4. Returns the messages from both steps.
     """
     logger.info(f"Received objective_text: {objective_text}")
 
-    # Invoke the search agent
+    # Step 1: Invoke the search agent
     try:
         search_response = agent_search.invoke({"messages": [HumanMessage(content=objective_text)]})
         logger.info("Search agent invoked successfully.")
@@ -187,34 +186,52 @@ def search_write_agent(objective_text, agent_search, agent_writer):
         logger.error(f"Error invoking search agent: {e}")
         raise e
 
-    # Extract and format search responses using list comprehension for efficiency
+    # ---------------------------
+    #  (A) Display raw search content
+    # ---------------------------
+    raw_content = search_response.get("raw_content", [])
+    if raw_content:
+        # Optional: show a subheader
+        st.subheader("Raw Search Results")
+        for i, doc in enumerate(raw_content, 1):
+            # Display whichever fields you find relevant
+            title = doc.get("title", "No title")
+            url = doc.get("url", "No URL")
+            text_snippet = doc.get("content", "")[:500]  # Just show the first ~500 chars
+            st.markdown(f"**Result {i}**")
+            st.markdown(f"**Title:** {title}")
+            st.markdown(f"**URL:** {url}")
+            st.write(f"**Snippet:** {text_snippet}")
+            st.write("---")
+    # ---------------------------
+
+    # Extract & format the chain-of-thought messages (the agent’s textual output)
     search_messages = [
         f"{message.__class__.__name__}: {message.content}"
-        for message in search_response.get('messages', [])
+        for message in search_response.get("messages", [])
     ]
 
-    logger.info(f"Search messages: {search_messages}")
-
-    # Combine search messages into a single string for the writer agent
+    # Combine search messages into a single string for the writing agent
     combined_search_content = "\n\n".join(search_messages)
 
-    # Invoke the writing agent with the search results
+    # Step 2: Invoke the writing agent with the search results
     try:
-        write_response = agent_writer.invoke({"messages": [HumanMessage(content=combined_search_content)]})
+        write_response = agent_writer.invoke(
+            {"messages": [HumanMessage(content=combined_search_content)]}
+        )
         logger.info("Writing agent invoked successfully.")
     except Exception as e:
         logger.error(f"Error invoking writing agent: {e}")
         raise e
 
-    # Extract and format writing responses using list comprehension
     write_messages = [
         f"{message.__class__.__name__}: {message.content}"
-        for message in write_response.get('messages', [])
+        for message in write_response.get("messages", [])
     ]
 
-    logger.info(f"Writing messages: {write_messages}")
-
+    # Finally, return both sets of messages so your code can store them in state
     return search_messages, write_messages
+
 
 # ------------------------------
 # Chat Display Function
